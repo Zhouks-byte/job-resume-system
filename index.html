@@ -47,17 +47,34 @@
             background: var(--danger);
             color: white;
             padding: 10px 20px;
-            text-align: center;
             font-size: 14px;
             font-weight: 500;
             display: none;
             position: sticky;
             top: 0;
             z-index: 100;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
         }
 
         .alert-bar.show {
-            display: block;
+            display: flex;
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 4px;
+            opacity: 0.9;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
         }
 
         /* 布局 */
@@ -665,6 +682,13 @@
             color: var(--text-secondary);
         }
 
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
         .empty-state h3 {
             font-size: 16px;
             margin-bottom: 8px;
@@ -730,7 +754,10 @@
 </head>
 <body>
     <!-- 顶部24小时面试提醒 -->
-    <div class="alert-bar" id="alertBar"></div>
+    <div class="alert-bar" id="alertBar">
+        <span id="alertText"></span>
+        <button class="alert-close" onclick="closeAlertBar()">&times;</button>
+    </div>
 
     <div class="app-layout">
         <!-- 移动端菜单按钮 -->
@@ -1189,8 +1216,18 @@
             return map[status] || status;
         }
 
+        // 提醒条关闭状态（会话级别，刷新页面后重置）
+        let alertDismissed = false;
+
+        function closeAlertBar() {
+            alertDismissed = true;
+            document.getElementById('alertBar').classList.remove('show');
+        }
+
         // 24小时面试提醒
         function checkUrgentInterviews() {
+            if (alertDismissed) return;
+
             const now = new Date();
             const urgent = appData.applications.filter(a => {
                 if (!a.interviewTime) return false;
@@ -1200,7 +1237,7 @@
 
             const alertBar = document.getElementById('alertBar');
             if (urgent.length > 0) {
-                alertBar.textContent = `提醒：你有 ${urgent.length} 场面试将在24小时内开始！${urgent.map(a => a.companyName).join('、')}`;
+                document.getElementById('alertText').textContent = `提醒：你有 ${urgent.length} 场面试将在24小时内开始！${urgent.map(a => a.companyName).join('、')}`;
                 alertBar.classList.add('show');
             } else {
                 alertBar.classList.remove('show');
@@ -1380,7 +1417,7 @@
                 return;
             }
 
-            resultEl.innerHTML = `<span style="color: var(--success);">简历 ${file.name} 上传成功！请确认简历为一页纸</span>`;
+            resultEl.innerHTML = `<span style="color: var(--success);">✓ 简历 ${file.name} 上传成功！请确认简历为一页纸</span>`;
             showToast('简历上传成功');
         }
 

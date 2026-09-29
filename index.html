@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>求职简历管理系统</title>
+    <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --info: #0891b2;
+            --info-light: #cffafe;
+            --gray: #64748b;
+            --gray-light: #f1f5f9;
+            --border: #e2e8f0;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* 顶部提醒条 */
+        .alert-bar {
+            background: var(--danger);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .alert-bar.show {
+            display: block;
+        }
+
+        /* 布局 */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 240px;
+            background: white;
+            border-right: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 50;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-light);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        /* 移动端汉堡按钮 */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 60;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+        }
+
+        /* 视图通用 */
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .card + .card {
+            margin-top: 16px;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .stat-card.primary .value { color: var(--primary); }
+        .stat-card.success .value { color: var(--success); }
+        .stat-card.warning .value { color: var(--warning); }
+        .stat-card.danger .value { color: var(--danger); }
+
+        /* 按钮 */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending { background: var(--gray-light); color: var(--gray); }
+        .status-applied { background: var(--primary-light); color: var(--primary); }
+        .status-screen { background: var(--info-light); color: var(--info); }
+        .status-interview { background: var(--warning-light); color: var(--warning); }
+        .status-offer { background: var(--success-light); color: var(--success); }
+        .status-rejected { background: var(--danger-light); color: var(--danger); }
+
+        .job-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 6px;
+        }
+
+        .job-type-intern { background: #fce7f3; color: #be185d; }
+        .job-type-fulltime { background: #ede9fe; color: #6d28d9; }
+
+        /* 公司列表 */
+        .company-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .company-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: box-shadow 0.2s;
+        }
+
+        .company-item:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .company-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .company-info .meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .company-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* 筛选栏 */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-bar select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        /* 日历 */
+        .calendar-container {
+            background: white;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .calendar-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .calendar-day-header {
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .calendar-day {
+            min-height: 100px;
+            padding: 8px;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .calendar-day:nth-child(7n) {
+            border-right: none;
+        }
+
+        .calendar-day:hover {
+            background: var(--gray-light);
+        }
+
+        .calendar-day.other-month {
+            background: #fafafa;
+            color: #cbd5e1;
+        }
+
+        .calendar-day.today {
+            background: var(--primary-light);
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .calendar-day.today .day-number {
+            color: var(--primary);
+        }
+
+        .interview-event {
+            background: var(--warning);
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 简历预览 */
+        .resume-preview {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .resume-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--text);
+        }
+
+        .resume-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .resume-header .contact {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .resume-section {
+            margin-bottom: 20px;
+        }
+
+        .resume-section h3 {
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .resume-item {
+            margin-bottom: 12px;
+        }
+
+        .resume-item-title {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .resume-item-sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .resume-item-desc {
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            line-height: 1;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* 面试准备 */
+        .question-item {
+            padding: 12px 16px;
+            border-left: 3px solid var(--primary);
+            background: var(--gray-light);
+            margin-bottom: 8px;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+
+        .prompt-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            margin-top: 12px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 200;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .overlay.show {
+                display: block;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 60px 16px 16px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .calendar-day {
+                min-height: 60px;
+            }
+
+            .resume-preview {
+                padding: 20px;
+            }
+
+            .company-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .company-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部24小时面试提醒 -->
+    <div class="alert-bar" id="alertBar"></div>
+
+    <div class="app-layout">
+        <!-- 移动端菜单按钮 -->
+        <button class="menu-toggle" onclick="toggleSidebar()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>求职简历管理系统</h1>
+                <p>助你高效求职，拿下Offer</p>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" data-view="dashboard" onclick="navigate('dashboard')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>仪表盘</span>
+                </div>
+                <div class="nav-item" data-view="resume" onclick="navigate('resume')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <span>简历管理</span>
+                </div>
+                <div class="nav-item" data-view="applications" onclick="navigate('applications')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>投递管理</span>
+                </div>
+                <div class="nav-item" data-view="calendar" onclick="navigate('calendar')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>面试日历</span>
+                </div>
+                <div class="nav-item" data-view="interview" onclick="navigate('interview')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    <span>面试准备</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <p>数据保存在本地浏览器</p>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- ===== 仪表盘视图 ===== -->
+            <div class="view active" id="view-dashboard">
+                <div class="page-header">
+                    <h2>求职仪表盘</h2>
+                    <p>概览你的求职进展</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="label">总投递数</div>
+                        <div class="value" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="label">面试中</div>
+                        <div class="value" id="statInterview">0</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="label">Offer数</div>
+                        <div class="value" id="statOffer">0</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="label">待投递</div>
+                        <div class="value" id="statPending">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px; font-size: 16px;">即将到来的面试</h3>
+                    <div id="upcomingInterviews"></div>
+                </div>
+
+                <div class="card" style="margin-top: 16px;">
+                    <h3 style="margin-bottom: 16px; font-size: 16px;">最近投递记录</h3>
+                    <div id="recentApplications"></div>
+                </div>
+            </div>
+
+            <!-- ===== 简历管理视图 ===== -->
+            <div class="view" id="view-resume">
+                <div class="page-header">
+                    <h2>简历管理</h2>
+                    <p>在线生成一页纸极简简历，或上传已有简历</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="resume-grid">
+                    <!-- 简历编辑表单 -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 16px; font-size: 16px;">简历信息填写</h3>
+                        <form id="resumeForm">
+                            <div class="form-group">
+                                <label>姓名</label>
+                                <input type="text" id="resumeName" placeholder="请输入姓名">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>电话</label>
+                                    <input type="tel" id="resumePhone" placeholder="手机号">
+                                </div>
+                                <div class="form-group">
+                                    <label>邮箱</label>
+                                    <input type="email" id="resumeEmail" placeholder="邮箱地址">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>求职意向</label>
+                                <input type="text" id="resumeTarget" placeholder="如：前端开发实习生">
+                            </div>
+                            <div class="form-group">
+                                <label>教育背景</label>
+                                <textarea id="resumeEducation" rows="2" placeholder="学校 | 专业 | 时间 | GPA"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>实习/工作经历</label>
+                                <textarea id="resumeExperience" rows="4" placeholder="公司 | 职位 | 时间&#10;• 工作内容描述"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>项目经历</label>
+                                <textarea id="resumeProjects" rows="4" placeholder="项目名称 | 角色 | 时间&#10;• 项目描述与成果"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>技能特长</label>
+                                <textarea id="resumeSkills" rows="2" placeholder="如：JavaScript, React, Node.js, 英语六级"></textarea>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="generateResume()">生成简历预览</button>
+                        </form>
+                    </div>
+
+                    <!-- 简历预览 -->
+                    <div>
+                        <div class="resume-preview" id="resumePreview">
+                            <div style="text-align: center; color: var(--text-secondary); padding: 60px 20px;">
+                                <p>填写左侧信息后</p>
+                                <p>点击"生成简历预览"</p>
+                                <p style="margin-top: 8px; font-size: 13px;">系统将自动生成一页纸极简简历</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
+                            <button class="btn btn-secondary" onclick="window.print()">打印 / 导出PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 上传简历 -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 16px; font-size: 16px;">上传已有简历</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                        支持 Word(.docx) 和 PDF 格式，简历必须为一页纸
+                    </p>
+                    <input type="file" id="resumeUpload" accept=".doc,.docx,.pdf" style="margin-bottom: 12px;">
+                    <button class="btn btn-primary" onclick="uploadResume()">上传简历</button>
+                    <div id="uploadResult" style="margin-top: 12px;"></div>
+                </div>
+            </div>
+
+            <!-- ===== 投递管理视图 ===== -->
+            <div class="view" id="view-applications">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>投递管理</h2>
+                        <p>跟踪你的求职投递进度</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openAddModal()">+ 添加投递</button>
+                </div>
+
+                <div class="filter-bar">
+                    <select id="filterStatus" onchange="renderApplications()">
+                        <option value="">全部状态</option>
+                        <option value="pending">待投递</option>
+                        <option value="applied">已投递</option>
+                        <option value="screen">初筛通过</option>
+                        <option value="interview">面试中</option>
+                        <option value="offer">已Offer</option>
+                        <option value="rejected">未通过</option>
+                    </select>
+                    <select id="filterType" onchange="renderApplications()">
+                        <option value="">全部类型</option>
+                        <option value="intern">实习岗</option>
+                        <option value="fulltime">正式岗</option>
+                    </select>
+                </div>
+
+                <div class="company-list" id="companyList"></div>
+            </div>
+
+            <!-- ===== 面试日历视图 ===== -->
+            <div class="view" id="view-calendar">
+                <div class="page-header">
+                    <h2>面试日历</h2>
+                    <p>管理你的面试时间安排</p>
+                </div>
+
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-nav">
+                            <button class="btn btn-secondary btn-sm" onclick="prevMonth()">上一月</button>
+                            <button class="btn btn-secondary btn-sm" onclick="nextMonth()">下一月</button>
+                        </div>
+                        <h3 id="calendarTitle"></h3>
+                        <button class="btn btn-primary btn-sm" onclick="todayCalendar()">今天</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="calendar-day-header">日</div>
+                        <div class="calendar-day-header">一</div>
+                        <div class="calendar-day-header">二</div>
+                        <div class="calendar-day-header">三</div>
+                        <div class="calendar-day-header">四</div>
+                        <div class="calendar-day-header">五</div>
+                        <div class="calendar-day-header">六</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarDays"></div>
+                </div>
+            </div>
+
+            <!-- ===== 面试准备视图 ===== -->
+            <div class="view" id="view-interview">
+                <div class="page-header">
+                    <h2>面试准备</h2>
+                    <p>针对性面试题库与模拟面试提示词</p>
+                </div>
+
+                <div class="card">
+                    <div class="form-group">
+                        <label>选择公司</label>
+                        <select id="interviewCompany" onchange="generateInterviewPrep()">
+                            <option value="">-- 选择已投递的公司 --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="interviewContent" style="display: none; margin-top: 20px;">
+                    <div class="card">
+                        <h3 style="margin-bottom: 16px; font-size: 16px;">面试分析报告</h3>
+                        <div id="interviewAnalysis"></div>
+                    </div>
+
+                    <div class="card" style="margin-top: 16px;">
+                        <h3 style="margin-bottom: 16px; font-size: 16px;">面试题库</h3>
+                        <div id="questionBank"></div>
+                    </div>
+
+                    <div class="card" style="margin-top: 16px;">
+                        <h3 style="margin-bottom: 16px; font-size: 16px;">豆包模拟面试提示词</h3>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                            复制以下提示词，在豆包中开启模拟面试：
+                        </p>
+                        <div class="prompt-box" id="promptBox"></div>
+                        <button class="btn btn-primary" style="margin-top: 12px;" onclick="copyPrompt()">一键复制提示词</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加投递模态框 -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">添加投递记录</h3>
+                <button class="modal-close" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form id="applicationForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>公司名称</label>
+                    <input type="text" id="companyName" placeholder="如：字节跳动" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>职位名称</label>
+                        <input type="text" id="jobTitle" placeholder="如：前端开发实习生" required>
+                    </div>
+                    <div class="form-group">
+                        <label>岗位类型</label>
+                        <select id="jobType">
+                            <option value="intern">实习岗</option>
+                            <option value="fulltime">正式岗</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>投递状态</label>
+                        <select id="appStatus">
+                            <option value="pending">待投递</option>
+                            <option value="applied">已投递</option>
+                            <option value="screen">初筛通过</option>
+                            <option value="interview">面试中</option>
+                            <option value="offer">已Offer</option>
+                            <option value="rejected">未通过</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>投递日期</label>
+                        <input type="date" id="applyDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>面试时间（如有）</label>
+                    <input type="datetime-local" id="interviewTime">
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="appNote" rows="2" placeholder="备注信息"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveApplication()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== 数据存储 =====
+        const STORAGE_KEY = 'jobResumeSystem';
+
+        let appData = {
+            applications: [],
+            resume: null
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                appData = JSON.parse(saved);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
+
+        // ===== 导航 =====
+        function navigate(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
+            closeSidebar();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // ===== Toast =====
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ===== 仪表盘 =====
+        function renderDashboard() {
+            const apps = appData.applications;
+            document.getElementById('statTotal').textContent = apps.length;
+            document.getElementById('statInterview').textContent = apps.filter(a => a.status === 'interview').length;
+            document.getElementById('statOffer').textContent = apps.filter(a => a.status === 'offer').length;
+            document.getElementById('statPending').textContent = apps.filter(a => a.status === 'pending').length;
+
+            // 即将到来的面试
+            const now = new Date();
+            const upcoming = apps
+                .filter(a => a.interviewTime && new Date(a.interviewTime) > now)
+                .sort((a, b) => new Date(a.interviewTime) - new Date(b.interviewTime))
+                .slice(0, 5);
+
+            const upcomingEl = document.getElementById('upcomingInterviews');
+            if (upcoming.length === 0) {
+                upcomingEl.innerHTML = '<div class="empty-state"><p>暂无 upcoming 面试安排</p></div>';
+            } else {
+                upcomingEl.innerHTML = upcoming.map(a => {
+                    const diffHours = Math.floor((new Date(a.interviewTime) - now) / (1000 * 60 * 60));
+                    let timeStr;
+                    if (diffHours < 24) {
+                        timeStr = `<span style="color: var(--danger); font-weight: 600;">${diffHours}小时后</span>`;
+                    } else {
+                        timeStr = `${Math.floor(diffHours/24)}天${diffHours%24}小时后`;
+                    }
+                    return `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border);">
+                        <div>
+                            <strong>${a.companyName}</strong> - ${a.jobTitle}
+                            ${a.jobType === 'intern' ? '<span class="job-type-badge job-type-intern">实习</span>' : '<span class="job-type-badge job-type-fulltime">正式</span>'}
+                        </div>
+                        <div>${timeStr}</div>
+                    </div>`;
+                }).join('');
+            }
+
+            // 最近投递
+            const recent = apps.slice(-5).reverse();
+            const recentEl = document.getElementById('recentApplications');
+            if (recent.length === 0) {
+                recentEl.innerHTML = '<div class="empty-state"><p>暂无投递记录，点击"投递管理"添加第一条</p></div>';
+            } else {
+                recentEl.innerHTML = recent.map(a => `
+                    <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border);">
+                        <div>
+                            <strong>${a.companyName}</strong> - ${a.jobTitle}
+                        </div>
+                        <span class="status-badge status-${a.status}">${getStatusText(a.status)}</span>
+                    </div>
+                `).join('');
+            }
+
+            checkUrgentInterviews();
+        }
+
+        function getStatusText(status) {
+            const map = {
+                pending: '待投递',
+                applied: '已投递',
+                screen: '初筛通过',
+                interview: '面试中',
+                offer: '已Offer',
+                rejected: '未通过'
+            };
+            return map[status] || status;
+        }
+
+        // 24小时面试提醒
+        function checkUrgentInterviews() {
+            const now = new Date();
+            const urgent = appData.applications.filter(a => {
+                if (!a.interviewTime) return false;
+                const diff = new Date(a.interviewTime) - now;
+                return diff > 0 && diff < 24 * 60 * 60 * 1000;
+            });
+
+            const alertBar = document.getElementById('alertBar');
+            if (urgent.length > 0) {
+                alertBar.textContent = `提醒：你有 ${urgent.length} 场面试将在24小时内开始！${urgent.map(a => a.companyName).join('、')}`;
+                alertBar.classList.add('show');
+            } else {
+                alertBar.classList.remove('show');
+            }
+        }
+
+        // ===== 投递管理 =====
+        function renderApplications() {
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterType = document.getElementById('filterType').value;
+
+            let apps = [...appData.applications];
+            if (filterStatus) apps = apps.filter(a => a.status === filterStatus);
+            if (filterType) apps = apps.filter(a => a.jobType === filterType);
+
+            const listEl = document.getElementById('companyList');
+            if (apps.length === 0) {
+                listEl.innerHTML = '<div class="empty-state"><h3>暂无投递记录</h3><p>点击右上角"添加投递"开始追踪你的求职进度</p></div>';
+                return;
+            }
+
+            listEl.innerHTML = apps.map(a => `
+                <div class="company-item">
+                    <div class="company-info">
+                        <h4>${a.companyName}
+                            ${a.jobType === 'intern' ? '<span class="job-type-badge job-type-intern">实习</span>' : '<span class="job-type-badge job-type-fulltime">正式</span>'}
+                        </h4>
+                        <div class="meta">${a.jobTitle} · 投递于 ${a.applyDate || '未设置'}</div>
+                        ${a.interviewTime ? `<div class="meta">面试时间：${new Date(a.interviewTime).toLocaleString('zh-CN')}</div>` : ''}
+                        ${a.note ? `<div class="meta">备注：${a.note}</div>` : ''}
+                    </div>
+                    <div class="company-actions">
+                        <span class="status-badge status-${a.status}">${getStatusText(a.status)}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="editApplication('${a.id}')">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteApplication('${a.id}')">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = '添加投递记录';
+            document.getElementById('applicationForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('addModal').classList.add('show');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('show');
+        }
+
+        function saveApplication() {
+            const id = document.getElementById('editId').value;
+            const data = {
+                companyName: document.getElementById('companyName').value,
+                jobTitle: document.getElementById('jobTitle').value,
+                jobType: document.getElementById('jobType').value,
+                status: document.getElementById('appStatus').value,
+                applyDate: document.getElementById('applyDate').value,
+                interviewTime: document.getElementById('interviewTime').value,
+                note: document.getElementById('appNote').value
+            };
+
+            if (id) {
+                const idx = appData.applications.findIndex(a => a.id === id);
+                appData.applications[idx] = { ...appData.applications[idx], ...data };
+                showToast('投递记录已更新');
+            } else {
+                data.id = Date.now().toString();
+                appData.applications.push(data);
+                showToast('投递记录已添加');
+            }
+
+            saveData();
+            closeAddModal();
+            renderApplications();
+            renderDashboard();
+            updateInterviewCompanyOptions();
+        }
+
+        function editApplication(id) {
+            const app = appData.applications.find(a => a.id === id);
+            if (!app) return;
+
+            document.getElementById('modalTitle').textContent = '编辑投递记录';
+            document.getElementById('editId').value = app.id;
+            document.getElementById('companyName').value = app.companyName;
+            document.getElementById('jobTitle').value = app.jobTitle;
+            document.getElementById('jobType').value = app.jobType;
+            document.getElementById('appStatus').value = app.status;
+            document.getElementById('applyDate').value = app.applyDate || '';
+            document.getElementById('interviewTime').value = app.interviewTime ? app.interviewTime.slice(0, 16) : '';
+            document.getElementById('appNote').value = app.note || '';
+            document.getElementById('addModal').classList.add('show');
+        }
+
+        function deleteApplication(id) {
+            if (confirm('确定要删除这条投递记录吗？')) {
+                appData.applications = appData.applications.filter(a => a.id !== id);
+                saveData();
+                renderApplications();
+                renderDashboard();
+                updateInterviewCompanyOptions();
+                showToast('已删除');
+            }
+        }
+
+        // ===== 简历生成 =====
+        function generateResume() {
+            const name = document.getElementById('resumeName').value || '你的姓名';
+            const phone = document.getElementById('resumePhone').value || '你的电话';
+            const email = document.getElementById('resumeEmail').value || '你的邮箱';
+            const target = document.getElementById('resumeTarget').value || '求职意向';
+            const education = document.getElementById('resumeEducation').value;
+            const experience = document.getElementById('resumeExperience').value;
+            const projects = document.getElementById('resumeProjects').value;
+            const skills = document.getElementById('resumeSkills').value;
+
+            let html = `
+                <div class="resume-header">
+                    <h1>${name}</h1>
+                    <div class="contact">${phone} | ${email} | ${target}</div>
+                </div>
+            `;
+
+            if (education) {
+                html += `<div class="resume-section">
+                    <h3>教育背景</h3>
+                    <div class="resume-item"><div class="resume-item-desc">${education.replace(/\n/g, '<br>')}</div></div>
+                </div>`;
+            }
+
+            if (experience) {
+                html += `<div class="resume-section">
+                    <h3>实习经历</h3>
+                    <div class="resume-item"><div class="resume-item-desc">${experience.replace(/\n/g, '<br>')}</div></div>
+                </div>`;
+            }
+
+            if (projects) {
+                html += `<div class="resume-section">
+                    <h3>项目经历</h3>
+                    <div class="resume-item"><div class="resume-item-desc">${projects.replace(/\n/g, '<br>')}</div></div>
+                </div>`;
+            }
+
+            if (skills) {
+                html += `<div class="resume-section">
+                    <h3>技能特长</h3>
+                    <div class="resume-item"><div class="resume-item-desc">${skills.replace(/\n/g, '<br>')}</div></div>
+                </div>`;
+            }
+
+            document.getElementById('resumePreview').innerHTML = html;
+            showToast('简历已生成');
+        }
+
+        function uploadResume() {
+            const fileInput = document.getElementById('resumeUpload');
+            const resultEl = document.getElementById('uploadResult');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                resultEl.innerHTML = '<span style="color: var(--danger);">请先选择文件</span>';
+                return;
+            }
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['doc', 'docx', 'pdf'].includes(ext)) {
+                resultEl.innerHTML = '<span style="color: var(--danger);">只支持 Word 和 PDF 格式</span>';
+                return;
+            }
+
+            // 模拟页数检查（前端无法真正读取PDF页数，这里做大小校验）
+            if (file.size > 500 * 1024) {
+                resultEl.innerHTML = '<span style="color: var(--warning);">文件较大，请确认简历是否为一页纸</span>';
+                return;
+            }
+
+            resultEl.innerHTML = `<span style="color: var(--success);">简历 ${file.name} 上传成功！请确认简历为一页纸</span>`;
+            showToast('简历上传成功');
+        }
+
+        // ===== 日历 =====
+        let currentDate = new Date();
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('calendarTitle').textContent = `${year}年${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            let daysHtml = '';
+            const today = new Date();
+
+            // 上个月的日期
+            for (let i = firstDay - 1; i >= 0; i--) {
+                daysHtml += `<div class="calendar-day other-month"><div class="day-number">${daysInPrevMonth - i}</div></div>`;
+            }
+
+            // 本月日期
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+                // 查找当天的面试
+                const interviews = appData.applications.filter(a => {
+                    if (!a.interviewTime) return false;
+                    const interviewDate = new Date(a.interviewTime);
+                    return interviewDate.getFullYear() === year &&
+                           interviewDate.getMonth() === month &&
+                           interviewDate.getDate() === d;
+                });
+
+                let eventsHtml = interviews.map(a =>
+                    `<div class="interview-event" onclick="event.stopPropagation(); editApplication('${a.id}')">${a.companyName}</div>`
+                ).join('');
+
+                daysHtml += `<div class="calendar-day ${isToday ? 'today' : ''}" onclick="onDayClick('${dateStr}')">
+                    <div class="day-number">${d}</div>
+                    ${eventsHtml}
+                </div>`;
+            }
+
+            // 下个月的日期补满
+            const totalCells = firstDay + daysInMonth;
+            const remaining = (7 - totalCells % 7) % 7;
+            for (let i = 1; i <= remaining; i++) {
+                daysHtml += `<div class="calendar-day other-month"><div class="day-number">${i}</div></div>`;
+            }
+
+            document.getElementById('calendarDays').innerHTML = daysHtml;
+        }
+
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function todayCalendar() {
+            currentDate = new Date();
+            renderCalendar();
+        }
+
+        function onDayClick(dateStr) {
+            // 点击日期时打开添加投递模态框，预填面试时间
+            openAddModal();
+            document.getElementById('appStatus').value = 'interview';
+            document.getElementById('interviewTime').value = `${dateStr}T10:00`;
+        }
+
+        // ===== 面试准备 =====
+        function updateInterviewCompanyOptions() {
+            const select = document.getElementById('interviewCompany');
+            const apps = appData.applications.filter(a => a.status === 'interview' || a.status === 'screen');
+
+            select.innerHTML = '<option value="">-- 选择已投递的公司 --</option>' +
+                apps.map(a => `<option value="${a.id}">${a.companyName} - ${a.jobTitle}</option>`).join('');
+        }
+
+        function generateInterviewPrep() {
+            const companyId = document.getElementById('interviewCompany').value;
+            const contentEl = document.getElementById('interviewContent');
+
+            if (!companyId) {
+                contentEl.style.display = 'none';
+                return;
+            }
+
+            const app = appData.applications.find(a => a.id === companyId);
+            if (!app) return;
+
+            contentEl.style.display = 'block';
+
+            // 生成面试分析报告
+            document.getElementById('interviewAnalysis').innerHTML = `
+                <div style="margin-bottom: 12px;"><strong>目标公司：</strong>${app.companyName}</div>
+                <div style="margin-bottom: 12px;"><strong>目标岗位：</strong>${app.jobTitle}（${app.jobType === 'intern' ? '实习岗' : '正式岗'}）</div>
+                <div style="margin-bottom: 12px;"><strong>当前阶段：</strong>${getStatusText(app.status)}</div>
+                <div style="padding: 12px; background: var(--primary-light); border-radius: 8px; margin-top: 16px;">
+                    <strong>备考建议：</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li>深入了解${app.companyName}的主营业务和产品</li>
+                        <li>准备3个针对该岗位的项目经历STAR描述</li>
+                        <li>练习常见行为面试问题（自我介绍、优缺点、职业规划）</li>
+                        <li>准备2-3个向面试官提问的问题</li>
+                    </ul>
+                </div>
+            `;
+
+            // 生成面试题库
+            const questions = generateQuestions(app);
+            document.getElementById('questionBank').innerHTML = questions.map((q, i) =>
+                `<div class="question-item"><strong>Q${i+1}.</strong> ${q}</div>`
+            ).join('');
+
+            // 生成豆包提示词
+            const prompt = `你现在是${app.companyName}的${app.jobTitle}面试官。我正在准备这个岗位的面试，请你扮演面试官对我进行模拟面试。
+
+要求：
+1. 先让我做一个自我介绍
+2. 根据${app.jobTitle}岗位的职责，逐一提问专业问题
+3. 每次只问一个问题，等我回答后再继续
+4. 每个问题回答完后，给出反馈和改进建议
+5. 面试结束后，给出整体评价和改进建议
+
+岗位：${app.jobTitle}
+公司：${app.companyName}
+岗位类型：${app.jobType === 'intern' ? '实习' : '正式'}`;
+
+            document.getElementById('promptBox').textContent = prompt;
+        }
+
+        function generateQuestions(app) {
+            const baseQuestions = [
+                '请做一个简单的自我介绍',
+                '你为什么选择我们公司？',
+                '你对这个岗位有什么理解？',
+                '介绍一个你最有成就感的项目',
+                '你最大的优点和缺点是什么？',
+                '你的职业规划是什么？',
+                '遇到过的最大挑战是什么？你是如何解决的？',
+                '为什么你觉得自己适合这个岗位？'
+            ];
+
+            // 根据岗位类型追加问题
+            if (app.jobType === 'intern') {
+                baseQuestions.push(
+                    '你能实习多长时间？每周可以到岗几天？',
+                    '你如何平衡实习和学业？'
+                );
+            } else {
+                baseQuestions.push(
+                    '你对薪资有什么期望？',
+                    '你为什么从上一家公司离职？'
+                );
+            }
+
+            return baseQuestions;
+        }
+
+        function copyPrompt() {
+            const promptText = document.getElementById('promptBox').textContent;
+            navigator.clipboard.writeText(promptText).then(() => {
+                showToast('提示词已复制到剪贴板');
+            });
+        }
+
+        // ===== 初始化 =====
+        function init() {
+            loadData();
+
+            // 添加一些示例数据（首次使用时）
+            if (appData.applications.length === 0) {
+                appData.applications = [
+                    {
+                        id: '1',
+                        companyName: '示例公司A',
+                        jobTitle: '前端开发实习生',
+                        jobType: 'intern',
+                        status: 'interview',
+                        applyDate: new Date().toISOString().split('T')[0],
+                        interviewTime: new Date(Date.now() + 20 * 60 * 60 * 1000).toISOString().slice(0,16),
+                        note: '技术面一面'
+                    },
+                    {
+                        id: '2',
+                        companyName: '示例公司B',
+                        jobTitle: '产品经理助理',
+                        jobType: 'intern',
+                        status: 'applied',
+                        applyDate: new Date().toISOString().split('T')[0],
+                        interviewTime: '',
+                        note: ''
+                    }
+                ];
+                saveData();
+            }
+
+            renderDashboard();
+            renderApplications();
+            renderCalendar();
+            updateInterviewCompanyOptions();
+            checkUrgentInterviews();
+
+            // 每分钟检查一次紧急面试
+            setInterval(checkUrgentInterviews, 60000);
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
